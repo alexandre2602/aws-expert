@@ -60,19 +60,19 @@ Para executar a primeira operação é necessário que seja usando um usuário c
 
 1) No Painel da AWS acesse o serviço CloudFormation
 
-![CloudFormation](images/Screenshot_from_2020-04-16_19-38-21.png)
+![CloudFormation](cloudformation/images/Screenshot_from_2020-04-16_19-38-21.png)
 
 2) Clique no botão Create stack
 3) Na tela seguinte selecine as opções conforme a imagem abaixo: 
 
-![Stack](images/Screenshot_from_2020-04-16_19-39-57.png)
+![Stack](cloudformation/images/Screenshot_from_2020-04-16_19-39-57.png)
 
 4) Clique em Next
 5) Informe o nome da stack por exemplo **iam-stack** e clique em next
 6) Na proxima tela não vamos informar nada e assim vamos até o final dela e clicamos em next novamente
 7) Na tela de review irá aparecer a imagem abaixo, selecione o checkbox e clique em Create stack
 
-![Stack](images/Screenshot_from_2020-04-16_19-42-29.png)
+![Stack](cloudformation/images/Screenshot_from_2020-04-16_19-42-29.png)
 
 8) Acompanhe o processo até que o processo informe Create_Complete.
 9) Acesse o IAM e verifique se o grupo e o usuário foram criados corretamente.
@@ -85,7 +85,7 @@ Para executar a primeira operação é necessário que seja usando um usuário c
 2) Clique no botão Create stack
 3) Na tela seguinte selecine as opções conforme a imagem abaixo: 
 
-![Stack](images/Screenshot_from_2020-04-16_20-08-34.png)
+![Stack](cloudformation/images/Screenshot_from_2020-04-16_20-08-34.png)
 
 4) Clique em Next
 5) Informe o nome da stack por exemplo **giropops-network** e clique em next
@@ -103,7 +103,7 @@ Para executar a primeira operação é necessário que seja usando um usuário c
 2) Clique no botão Create stack
 3) Na tela seguinte selecine as opções conforme a imagem abaixo: 
 
-![Stack](images/Screenshot_from_2020-04-16_22-19-42.png)
+![Stack](cloudformation/images/Screenshot_from_2020-04-16_22-19-42.png)
 
 4) Clique em Next
 5) Informe o nome da stack por exemplo **giropops-cloudtrail** e clique em next
@@ -120,14 +120,14 @@ Para executar a primeira operação é necessário que seja usando um usuário c
 2) Clique no botão Create stack
 3) Na tela seguinte selecine as opções conforme a imagem abaixo: 
 
-![Stack](images/Screenshot_from_2020-04-16_22-22-55.png)
+![Stack](cloudformation/images/Screenshot_from_2020-04-16_22-22-55.png)
 
 4) Clique em Next
 5) Informe o nome da stack por exemplo **giropops-cloudtrail** e clique em next
 6) Na proxima tela não vamos informar nada e assim vamos até o final dela e clicamos em next novamente
 7) Na tela de review irá aparecer a imagem abaixo, selecione o checkbox e clique em Create stack
 
-![Stack](images/Screenshot_from_2020-04-16_19-42-29.png)
+![Stack](cloudformation/images/Screenshot_from_2020-04-16_19-42-29.png)
 
 8) Acompanhe o processo até que o processo informe Create_Complete.
 9) Acesse o serviço CloudTrail foi criado corretamente.
