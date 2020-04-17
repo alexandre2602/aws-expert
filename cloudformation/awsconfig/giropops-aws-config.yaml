@@ -1,0 +1,100 @@
+Resources:
+
+  giropopsBucketConfig: 
+    Type: AWS::S3::Bucket
+    Properties: {}
+
+  ConfigRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Effect: Allow
+          Principal:
+            Service: [config.amazonaws.com]
+          Action: ['sts:AssumeRole']
+      ManagedPolicyArns: ['arn:aws:iam::aws:policy/service-role/AWSConfigRole']
+      Policies:
+      - PolicyName: root
+        PolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+          - Effect: Allow
+            Action: s3:GetBucketAcl
+            Resource: !Join ['', ['arn:aws:s3:::', !Ref 'giropopsBucketConfig']]
+          - Effect: Allow
+            Action: s3:PutObject
+            Resource: !Join ['', ['arn:aws:s3:::', !Ref 'giropopsBucketConfig', /AWSLogs/,
+                !Ref 'AWS::AccountId', /*]]
+            Condition:
+              StringEquals:
+                s3:x-amz-acl: bucket-owner-full-control
+          - Effect: Allow
+            Action: config:Put*
+            Resource: '*'
+
+  ConfigRecorder: 
+    Type: AWS::Config::ConfigurationRecorder
+    Properties: 
+      Name: default
+      RecordingGroup: 
+        ResourceTypes: 
+          - "AWS::EC2::Volume"
+      RoleARN: 
+        Fn::GetAtt: 
+          - ConfigRole
+          - Arn
+
+  DeliveryChannel:
+    Type: AWS::Config::DeliveryChannel
+    Properties:
+      ConfigSnapshotDeliveryProperties:
+        DeliveryFrequency: Six_Hours
+      S3BucketName: !Ref giropopsBucketConfig
+  
+  ConfigRuleForVolumeTags: 
+    Type: AWS::Config::ConfigRule
+    Properties: 
+      ConfigRuleName: "REQUIRED_TAGS"
+      InputParameters: 
+        tag1Key: Environment
+        tag2Key: Name
+      Scope: 
+        ComplianceResourceTypes: 
+          - "AWS::EC2::Volume"
+      Source: 
+        Owner: AWS
+        SourceIdentifier: "REQUIRED_TAGS"   
+    DependsOn: ConfigRecorder 
+
+  configRootAccountMfaEnabled: 
+    Type: AWS::Config::ConfigRule
+    Properties: 
+      ConfigRuleName: "ROOT_ACCOUNT_MFA_ENABLED"
+      Source: 
+        Owner: AWS
+        SourceIdentifier: "ROOT_ACCOUNT_MFA_ENABLED"        
+    DependsOn: ConfigRecorder 
+
+  configIAMPasswordPolicy: 
+    Type: AWS::Config::ConfigRule
+    Properties: 
+      ConfigRuleName: "IAM_PASSWORD_POLICY"
+      Source: 
+        Owner: AWS
+        SourceIdentifier: "IAM_PASSWORD_POLICY"              
+    DependsOn: ConfigRecorder 
+
+  configApprovedAmisById: 
+    Type: AWS::Config::ConfigRule
+    Properties: 
+      ConfigRuleName: "APPROVED_AMIS_BY_ID"
+      InputParameters: 
+        amiIds: ami-07ebfd5b3428b6f4d, ami-0915e09cc7ceee3ab, ami-08bc77a2c7eb2b1da
+      Source: 
+        Owner: AWS
+        SourceIdentifier: "APPROVED_AMIS_BY_ID" 
+    DependsOn: ConfigRecorder 
+    
+

@@ -1,0 +1,42 @@
+Resources:
+
+  operationsGroup:
+    Type: AWS::IAM::Group
+    Properties:
+      GroupName: "Operations"
+      Policies:
+        - PolicyName: powerUser
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+            - Effect: Allow
+              NotAction:
+              - iam:*
+              - organizations:*
+              - account:*
+              Resource: "*"
+            - Effect: Allow
+              Action:
+              - iam:CreateServiceLinkedRole
+              - iam:DeleteServiceLinkedRole
+              - iam:ListRoles
+              - organizations:DescribeOrganization
+              - account:ListRegions
+              Resource: "*"           
+
+  addAwsExpertUser:
+    Type: AWS::IAM::User
+    Properties:
+      Path: /
+      LoginProfile:
+        Password: "u4wfKbKPQ!okP7oV2xyAZx0kFw2&q&4m"
+        PasswordResetRequired: true
+      UserName: "awsexpert"
+
+  groupAddition:
+    Type: AWS::IAM::UserToGroupAddition
+    Properties:
+      GroupName: !Ref operationsGroup
+      Users:
+        - !Ref addAwsExpertUser
+          

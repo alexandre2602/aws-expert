@@ -1,0 +1,210 @@
+Resources:
+
+  giropopsVPC:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: 10.10.0.0/16
+      EnableDnsSupport: true
+      EnableDnsHostnames: true
+      Tags:
+        - Key: Name
+          Value: !Sub ${AWS::StackName}-CloudFormation
+
+  giropopsInternetGateway:
+    Type: AWS::EC2::InternetGateway
+    Properties:
+      Tags:
+        - Key: Name
+          Value: !Sub ${AWS::StackName}-IGtw-CloudFormation
+    DependsOn: giropopsVPC
+
+  giropopsAttachGateway:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      VpcId: !Ref giropopsVPC
+      InternetGatewayId: !Ref giropopsInternetGateway
+
+  giropopsSubnetPublic:
+    Type: AWS::EC2::Subnet
+    Properties:
+      AvailabilityZone: !Select [0, !GetAZs '']
+      VpcId: !Ref giropopsVPC
+      CidrBlock: 10.10.1.0/24
+      Tags:
+        - Key: Name
+          Value: !Sub ${AWS::StackName}-Subnet-Public
+
+  giropopsSubnetPrivate:
+    Type: AWS::EC2::Subnet
+    Properties:
+      AvailabilityZone: !Select [1, !GetAZs '']
+      VpcId: !Ref giropopsVPC
+      CidrBlock: 10.10.2.0/24
+      Tags:
+        - Key: Name
+          Value: !Sub ${AWS::StackName}-Subnet-Private
+
+  giropopsElasticIP:
+      Type: AWS::EC2::EIP
+      Properties:
+        Domain: giropopsVPC
+
+  giropopsNatGateway:
+      Type: AWS::EC2::NatGateway
+      Properties:
+        AllocationId: !GetAtt giropopsElasticIP.AllocationId
+        SubnetId: !Ref giropopsSubnetPublic
+        Tags:
+        - Key: Name
+          Value: !Sub ${AWS::StackName}-NatGateway
+
+  giropopsRouteTablePrivate:
+      Type: AWS::EC2::RouteTable
+      Properties:
+        VpcId: !Ref giropopsVPC
+        Tags:
+          - Key: Name
+            Value: !Sub ${AWS::StackName}-Private-RouteTable
+
+  giropopsRoutePrivate:
+      Type: AWS::EC2::Route
+      Properties:
+        RouteTableId: !Ref giropopsRouteTablePrivate
+        DestinationCidrBlock: 0.0.0.0/0
+        NatGatewayId: !Ref giropopsNatGateway
+
+  giropopsRouteTablePublic:
+      Type: AWS::EC2::RouteTable
+      Properties:
+        VpcId: !Ref giropopsVPC
+        Tags:
+          - Key: Name
+            Value: !Sub ${AWS::StackName}-Public-RouteTable
+
+  giropopsRoutePublic:
+      Type: AWS::EC2::Route
+      Properties:
+        RouteTableId: !Ref giropopsRouteTablePublic
+        DestinationCidrBlock: 0.0.0.0/0
+        GatewayId: !Ref giropopsInternetGateway
+
+  giropopsPublicRouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref giropopsRouteTablePublic
+      SubnetId: !Ref giropopsSubnetPublic
+
+  giropopsPrivateRouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref giropopsRouteTablePrivate
+      SubnetId: !Ref giropopsSubnetPrivate
+
+  giropopsSecGroupWeb:
+      Type: AWS::EC2::SecurityGroup
+      Properties:
+        GroupName: WebServers
+        GroupDescription: Sec Group para os Web Servers
+        VpcId: !Ref giropopsVPC
+        SecurityGroupIngress:
+          - 
+            IpProtocol: tcp
+            FromPort: 22
+            ToPort: 22
+            CidrIp: 0.0.0.0/0
+          - 
+            IpProtocol: tcp
+            FromPort: 80
+            ToPort: 80
+            CidrIp: 0.0.0.0/0
+          - 
+            IpProtocol: tcp
+            FromPort: 443
+            ToPort: 443
+            CidrIp: 0.0.0.0/0
+        Tags:
+          - Key: Name
+            Value: !Sub ${AWS::StackName}-SecGroup-Web
+
+  giropopsSecGroupDb:
+      Type: AWS::EC2::SecurityGroup
+      Properties:
+        GroupName: Databases
+        GroupDescription: Sec Group para o Databases
+        VpcId: !Ref giropopsVPC
+        SecurityGroupIngress:
+          - 
+            IpProtocol: tcp
+            FromPort: 22
+            ToPort: 22
+            CidrIp: 0.0.0.0/0
+          - 
+            IpProtocol: tcp
+            FromPort: 5432
+            ToPort: 5432
+            CidrIp: 0.0.0.0/0
+        Tags:
+          - Key: Name
+            Value: !Sub ${AWS::StackName}-SecGroup-Db
+
+  giropopsDbVolume:
+      Type: AWS::EC2::Volume
+      DeletionPolicy: Snapshot
+      Properties:
+        AvailabilityZone: !Select [1, !GetAZs '']
+        Encrypted: false
+        Size: 64
+        VolumeType: gp2
+        Tags:
+          - Key: Name
+            Value: !Sub ${AWS::StackName}-Volume-Db
+
+  giropopsDbInstance:
+      Type: AWS::EC2::Instance
+      Properties:
+        BlockDeviceMappings: 
+          - 
+            DeviceName: "/dev/sda1"
+            Ebs: 
+              VolumeSize: 24
+              VolumeType: gp2
+        KeyName: awsKey
+        ImageId: ami-07ebfd5b3428b6f4d
+        InstanceType: t2.nano
+        Monitoring: true
+        SecurityGroupIds:
+          - !Ref giropopsSecGroupDb
+        SubnetId: !Ref giropopsSubnetPrivate
+        Volumes: 
+          - 
+            Device: "/dev/sdf"
+            VolumeId: !Ref giropopsDbVolume
+        Tags:
+          - Key: Name
+            Value: !Sub ${AWS::StackName}-Db-Instance
+
+  giropopsWebElasticIP:
+      Type: AWS::EC2::EIP
+      Properties:
+        InstanceId: !Ref giropopsWebInstance
+        Domain: giropopsVPC
+
+  giropopsWebInstance:
+      Type: AWS::EC2::Instance
+      Properties:
+        BlockDeviceMappings: 
+          - 
+            DeviceName: "/dev/sda1"
+            Ebs: 
+              VolumeSize: 24
+              VolumeType: gp2
+        KeyName: awsKey
+        ImageId: ami-07ebfd5b3428b6f4d
+        InstanceType: t2.nano
+        Monitoring: true
+        SecurityGroupIds:
+          - !Ref giropopsSecGroupWeb
+        SubnetId: !Ref giropopsSubnetPublic
+        Tags:
+          - Key: Name
+            Value: !Sub ${AWS::StackName}-Web-Instance
